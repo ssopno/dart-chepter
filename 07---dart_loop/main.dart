@@ -29,6 +29,74 @@ void main(){
     print(i);
   }
 
+  for (var i = 0; i < 10; i++) {
+    if (i == 5) {
+      continue;
+    }
+    print(i);
+  }
+
+  for (var i = 1; i <= 10; i++) {
+    if (i == 5) {
+      break;
+    }
+    print(i);
+  }
+
+  ///while-loop
+  var i = 0;
+  while (i < 10) {
+    print(i);
+    i++;
+  }
+
+  do {
+    print(i);
+    i++;
+  } while (i < 10);
+
+  ///loop
+  // print 1 to 5
+  for (var i = 1; i <= 5; i++) {
+    print("Number : $i");
+  }
+
+  // print 6 to 10
+  int a = 6;
+  while (a <= 10) {
+    print(a);
+    a++;
+  }
+
+  // print 11 to 15
+
+  int i1 = 11;
+
+  do {
+    print(i1);
+    i1++;
+  } while (i1 <= 15);
+
+  // another way to printing list item
+
+  List<String> fruits = ["Mango", "Jackfruit", "Pineapple", "Watermelon"];
+  for (int i = 0; i < fruits.length; i++) {
+    print(fruits[i]);
+  }
+
+  List<String> versityName = ["SUST", "BUET", "RUET", "CUET"];
+
+  versityName.forEach((element) {
+    print(element);
+  });
+
+  print("\nStandard way\n");
+
+  // standard way
+  for (var value in versityName) {
+    print(value);
+  }
+
 
 
   }
