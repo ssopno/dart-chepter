@@ -15,56 +15,32 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home:  MyHomePage(),
+      home: const HomeScreen(),
     );
   }
 }
-
-class MyHomePage extends StatelessWidget {
- RxInt _counter = 0.obs;
-
-  void _incrementCounter() {
-      _counter++;
-  }
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
-        title: Text('Home'),
+        title:const  Text('Home'),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Obx(() =>  Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-            ),
-            ElevatedButton(
-                onPressed: (){
-                  // Navigator.push(context, MaterialPageRoute(builder:( context)=>const SecondScreen()));
-                  // Get.to(const SecondScreen());
-                  // Get.snackbar('shathi','fardin');
-                  Get.dialog(AlertDialog());
-                },
-                child:const  Text('go to second screen'))
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+      body: Column(
+        children: [
+          ElevatedButton(
+              onPressed: (){
+              Get.to(const SecondScreen());
+              },
+              child:const Text('Second screen'))
+        ],
       ),
     );
   }
 }
+
 
 class SecondScreen extends StatelessWidget {
   const SecondScreen({Key? key}) : super(key: key);
@@ -73,7 +49,48 @@ class SecondScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:const Text('Second Screen'),
+        title: const Text('Second Screen'),
+      ),
+      body: Column(
+        children: [
+          ElevatedButton(
+              onPressed: () {
+                Get.back();
+              },
+              child: const Text('Back')),
+          ElevatedButton(
+              onPressed: () {
+                Get.off(const ThirdScreen(), arguments: ['dhfjhf', 'hf']);
+              },
+              child: const Text('Third Screen')),
+          ElevatedButton(
+              onPressed: () {
+                Get.offAll(const ThirdScreen(), predicate: (route) => false);
+              },
+              child: const Text('Third Screen with empty stack')),
+        ],
+      ),
+    );
+  }
+}
+
+class ThirdScreen extends StatelessWidget {
+ const ThirdScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title:const Text('Third Screen'),
+      ),
+      body: Column(
+        children: [
+          ElevatedButton(
+              onPressed: () {
+                Get.back();
+              },
+              child: const Text('Back'))
+        ],
       ),
     ) ;
   }
