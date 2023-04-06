@@ -1,100 +1,91 @@
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'dart:developer';
 
-void main() {
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import '';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const HomeScreen(),
-    );
+    return MaterialApp(
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        home: const BookListScreen());
   }
 }
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+
+class BookListScreen extends StatefulWidget {
+  const BookListScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title:const  Text('Home'),
-      ),
-      body: Column(
-        children: [
-          ElevatedButton(
-              onPressed: (){
-              Get.to(const SecondScreen());
-              },
-              child:const Text('Second screen'))
-        ],
-      ),
-    );
-  }
+  State<BookListScreen> createState() => _BookListScreenState();
 }
 
-
-class SecondScreen extends StatelessWidget {
-  const SecondScreen({Key? key}) : super(key: key);
+class _BookListScreenState extends State<BookListScreen> {
+  FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
+  List<BookList> books = [];
+  bool _getBooksInProgress = false;
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Second Screen'),
-      ),
-      body: Column(
-        children: [
-          ElevatedButton(
-              onPressed: () {
-                Get.back();
-              },
-              child: const Text('Back')),
-          ElevatedButton(
-              onPressed: () {
-                Get.off(const ThirdScreen(), arguments: ['dhfjhf', 'hf']);
-              },
-              child: const Text('Third Screen')),
-          ElevatedButton(
-              onPressed: () {
-                Get.offAll(const ThirdScreen(), predicate: (route) => false);
-              },
-              child: const Text('Third Screen with empty stack')),
-        ],
-      ),
-    );
+  void initState() {
+    super.initState();
+    getAllBooks();
   }
-}
 
-class ThirdScreen extends StatelessWidget {
- const ThirdScreen({Key? key}) : super(key: key);
+  Future<void> getAllBooks() async {
+    _getBooksInProgress = true;
+    setState(() {});
+    books.clear();
+    await firebaseFirestore.collection('books').get().then((value) {
+      for(var doc in value.docs ){
+        books.add(BookList(doc.get('name'), doc.get('writter'),doc.get('year')));
+      }
+    });
+    _getBooksInProgress = false;
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:const Text('Third Screen'),
+        title: const Text('Book Collection'),
       ),
-      body: Column(
-        children: [
-          ElevatedButton(
-              onPressed: () {
-                Get.back();
-              },
-              child: const Text('Back'))
-        ],
-      ),
-    ) ;
+      body: _getBooksInProgress
+          ? const Center(
+          child: CircularProgressIndicator()
+      )
+          : RefreshIndicator(
+        onRefresh:()async {
+          getAllBooks();
+        },
+            child: ListView.builder(
+                itemCount: books.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(books[index].name),
+                    subtitle: Text(books[index].writter),
+                    trailing: Text(books[index].year),
+                  );
+                }),
+          ),
+    );
   }
 }
 
+class BookList {
+  final String name, writter, year;
 
-
+  BookList(this.name, this.writter, this.year);
+}
