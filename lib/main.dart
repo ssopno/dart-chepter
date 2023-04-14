@@ -1,8 +1,11 @@
-
+import 'dart:developer';
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,6 +19,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'Flutter Demo',
         theme: ThemeData(
           primarySwatch: Colors.blue,
@@ -33,8 +37,12 @@ class BookListScreen extends StatefulWidget {
 
 class _BookListScreenState extends State<BookListScreen> {
   FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
-  List<BookList> books = [];
+  final FirebaseStorage firebaseStorage = FirebaseStorage.instance;
+  List<Book> books = [];
   bool _getBooksInProgress = false;
+
+
+
 
   @override
   void initState() {
@@ -49,11 +57,22 @@ class _BookListScreenState extends State<BookListScreen> {
     await firebaseFirestore.collection('books').get().then((documents) {
       for (var doc in documents.docs) {
         books.add(
-            BookList(doc.get('name'), doc.get('writter'), doc.get('year')));
+            Book(doc.get('name'), doc.get('writter'), doc.get('year')));
       }
     });
     _getBooksInProgress = false;
+    log(books.length.toString());
     setState(() {});
+  }
+
+  Future<File> getImagesFileFromAssets(String path) async {
+    final byteData = await rootBundle.load('assets/$path');
+
+    final file = File('${(await getTemporaryDirectory()).path}/$path');
+    await file.create(recursive: true);
+    await file.writeAsBytes(byteData.buffer.asUint8List(byteData.offsetInBytes,byteData.lengthInBytes));
+
+    return file;
   }
 
   @override
@@ -61,6 +80,16 @@ class _BookListScreenState extends State<BookListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Book Collection'),
+        actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ImageScreen()));
+              },
+              icon: const Icon(Icons.image))
+        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
           stream: firebaseFirestore.collection('books').snapshots(),
@@ -78,7 +107,7 @@ class _BookListScreenState extends State<BookListScreen> {
             if (snapshot.hasData) {
               books.clear();
               for (var doc in snapshot.data!.docs) {
-                books.add(BookList(
+                books.add(Book(
                     doc.get('name'), doc.get('writter'), doc.get('year')));
               }
 
@@ -97,12 +126,84 @@ class _BookListScreenState extends State<BookListScreen> {
               );
             }
           }),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          File file = await getImagesFileFromAssets('images/test.png');
+          firebaseStorage.ref('profile_pic').child(file.path.split('/').last).putFile(file).then((p0) {
+            log(p0.toString());
+          }).onError((error, stackTrace) {
+            log(error.toString());
+            log(stackTrace.toString());
+          });
+        },
+      ),
     );
   }
 }
 
-class BookList {
+class Book {
   final String name, writter, year;
 
-  BookList(this.name, this.writter, this.year);
+  Book(this.name, this.writter, this.year);
+}
+
+
+
+
+class ImageScreen extends StatefulWidget {
+  const ImageScreen({Key? key}) : super(key: key);
+
+  @override
+  State<ImageScreen> createState() => _ImageScreenState();
+}
+
+class _ImageScreenState extends State<ImageScreen> {
+  final FirebaseStorage firebaseStorage = FirebaseStorage.instance;
+  List<Reference> storageReference = [];
+
+  Future getImages() async {
+   await firebaseStorage.ref('profile_pic').listAll().then((value) async {
+      for(var val in value.items){
+        storageReference = value.items;
+        setState(() {
+
+        });
+      }
+    });
+  }
+  @override
+  void initState() {
+    getImages();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Image Screen'),
+      ),
+      body: ListView.builder(
+          itemCount: storageReference.length,
+          itemBuilder: (context,index){
+            return ListTile(
+              onTap: ()async{
+                final url = await storageReference[index].getDownloadURL();
+                Navigator.push(context, MaterialPageRoute(builder: (context)=>ImageViewer(url: url) ));
+              },
+                title: Text(storageReference[index].name));
+      })
+    );
+  }
+}
+
+
+class ImageViewer extends StatelessWidget {
+  final String url;
+  const ImageViewer({Key? key, required this.url}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.network(url);
+  }
 }
