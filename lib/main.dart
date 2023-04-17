@@ -5,11 +5,13 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
+import 'package:getx/fcm_utils.dart';
 import 'package:path_provider/path_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  await FCMUtils().initialize();
   runApp(const MyApp());
 }
 
@@ -189,14 +191,13 @@ class _ImageScreenState extends State<ImageScreen> {
             return ListTile(
               onTap: ()async{
                 final url = await storageReference[index].getDownloadURL();
-                Navigator.push(context, MaterialPageRoute(builder: (context)=>ImageViewer(url: url) ));
+                Navigator.push(context, MaterialPageRoute(builder: (context)=>ImageViewer(url: url)));
               },
                 title: Text(storageReference[index].name));
       })
     );
   }
 }
-
 
 class ImageViewer extends StatelessWidget {
   final String url;
@@ -207,3 +208,4 @@ class ImageViewer extends StatelessWidget {
     return Image.network(url);
   }
 }
+
